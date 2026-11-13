@@ -19,36 +19,25 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Otomatik Proje Yapısını Oluştur
+      - name: Gradle İzinlerini Ver ve Derle
         run: |
-          mkdir -p app/src/main/java app/src/main/res
-          if [ ! -f "settings.gradle" ]; then
-            echo "include ':app'" > settings.gradle
-          fi
-          if [ ! -f "build.gradle" ]; then
-            echo "buildscript { repositories { google(); mavenCentral() } }" > build.gradle
-          fi
-          if [ ! -f "app/build.gradle" ]; then
-            echo "plugins { id 'com.android.application' }" > app/build.gradle
-          fi
           if [ -f "gradlew" ]; then
             chmod +x gradlew
-          fi
-
-      - name: Projeyi Derle
-        run: |
-          if [ -f "./gradlew" ]; then
-            ./gradlew assembleDebug --stacktrace || true
+            ./gradlew assembleDebug --stacktrace
+          elif [ -f "app/gradlew" ]; then
+            cd app
+            chmod +x gradlew
+            ./gradlew assembleDebug --stacktrace
           else
+            echo "Gradlew bulunamadı, genel derleme deneniyor"
             gradle assembleDebug --stacktrace || true
           fi
 
-      - name: APK Dosyasını Bul ve Paketle
+      - name: Tüm APK Dosyalarını Bul ve Paketle
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
           path: |
-            **/build/outputs/apk/debug/*.apk
-            app/build/outputs/apk/debug/*.apk
-            build/outputs/apk/debug/*.apk
+            **/*.apk
+            */**/*.apk
         if: always()
