@@ -19,25 +19,94 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Gradle İzinlerini Ver ve Derle
+      - name: Tam Android Projesi Oluştur
         run: |
-          if [ -f "gradlew" ]; then
-            chmod +x gradlew
-            ./gradlew assembleDebug --stacktrace
-          elif [ -f "app/gradlew" ]; then
-            cd app
-            chmod +x gradlew
-            ./gradlew assembleDebug --stacktrace
-          else
-            echo "Gradlew bulunamadı, genel derleme deneniyor"
-            gradle assembleDebug --stacktrace || true
-          fi
+          mkdir -p app/src/main/java/com/atlas/ai app/src/main/res/values app/src/main/res/layout
+          
+          # settings.gradle
+          echo "include ':app'" > settings.gradle
+          
+          # root build.gradle
+          cat << 'EOF' > build.gradle
+          buildscript {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+              dependencies {
+                  classpath "com.android.tools.build:gradle:7.4.2"
+              }
+          }
+          allprojects {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          EOF
+          
+          # app/build.gradle
+          cat << 'EOF' > app/build.gradle
+          plugins {
+              id 'com.android.application'
+          }
+          android {
+              compileSdk 33
+              defaultConfig {
+                  applicationId "com.atlas.ai"
+                  minSdk 21
+                  targetSdk 33
+                  versionCode 1
+                  versionName "1.0"
+              }
+          }
+          dependencies {
+              implementation 'androidx.appcompat:appcompat:1.6.1'
+          }
+          EOF
 
-      - name: Tüm APK Dosyalarını Bul ve Paketle
+          # AndroidManifest.xml
+          cat << 'EOF' > app/src/main/AndroidManifest.xml
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+              package="com.atlas.ai">
+              <application
+                  android:label="Atlas AI"
+                  android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+                  <activity android:name=".MainActivity"
+                      android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+
+          # MainActivity.java
+          cat << 'EOF' > app/src/main/java/com/atlas/ai/MainActivity.java
+          package com.atlas.ai;
+          import android.os.Bundle;
+          import androidx.appcompat.app.AppCompatActivity;
+          public class MainActivity extends AppCompatActivity {
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+              }
+          }
+          EOF
+
+          # gradle wrapper oluştur
+          gradle wrapper
+
+      - name: Projeyi Derle
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
+
+      - name: APK Dosyasını Paketle
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: |
-            **/*.apk
-            */**/*.apk
+          path: app/build/outputs/apk/debug/*.apk
         if: always()
