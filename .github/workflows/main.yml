@@ -1,45 +1,37 @@
-name: ATLAS Android APK
+name: Build Atlas AI APK
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download project
+      - name: Kodları Çek
         uses: actions/checkout@v4
 
-      - name: Install Java
+      - name: Java 17 Kurulumu
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
           java-version: '17'
+          distribution: 'temurin'
 
-      - name: Install Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.7'
+      - name: Gradle İzinlerini Ayarla
+        run: chmod +x gradlew || true
 
-      - name: Install Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Extract ATLAS
+      - name: APK Derle
         run: |
-          unzip -q ATLAS_AI_Android_Starter.zip -d atlas-src
-          SETTINGS=$(find atlas-src -name settings.gradle -print -quit)
-          PROJECT_DIR=$(dirname "$SETTINGS")
-          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
+          if [ -f "./gradlew" ]; then
+            ./gradlew assembleDebug
+          else
+            gradle assembleDebug
+          fi
 
-      - name: Build APK
-        run: gradle -p "$PROJECT_DIR" assembleDebug
-
-      - name: Save APK
+      - name: APK Dosyasını Paketle
         uses: actions/upload-artifact@v4
         with:
-          name: ATLAS-APK
-          path: atlas-src/**/build/outputs/apk/debug/*.apk
+          name: app-debug
+          path: app/build/outputs/apk/debug/*.apk
