@@ -19,27 +19,26 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Eksik Klasörleri Düzenle
+      - name: Gradle İzinlerini Ayarla
         run: |
-          mkdir -p app/src/main/java app/src/main/res
-          if [ -f "build.gradle" ] && [ ! -f "app/build.gradle" ]; then
-            cp build.gradle app/
+          if [ -f "gradlew" ]; then
+            chmod +x gradlew
           fi
-          chmod +x gradlew || true
 
-      - name: APK Derle
+      - name: Projeyi Derle
         run: |
           if [ -f "./gradlew" ]; then
-            ./gradlew assembleDebug --continue || gradle assembleDebug
+            ./gradlew assembleDebug --stacktrace
           else
-            echo "Gradlew bulunamadı, genel derleme deneniyor"
+            gradle assembleDebug --stacktrace
           fi
 
-      - name: APK Dosyasını Paketle
+      - name: APK Dosyasını Bul ve Paketle
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
           path: |
+            **/build/outputs/apk/debug/*.apk
             app/build/outputs/apk/debug/*.apk
             build/outputs/apk/debug/*.apk
         if: always()
