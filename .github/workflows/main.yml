@@ -21,10 +21,15 @@ jobs:
       - name: Build with Gradle
         run: |
           mkdir -p app/src/main/java/com/example/app app/src/main/res
-          echo "include ':app'" > settings.gradle
+          
+          echo "pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }" > settings.gradle
+          echo "dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }" >> settings.gradle
           echo "rootProject.name='App'" >> settings.gradle
+          echo "include ':app'" >> settings.gradle
+
           echo "plugins { id 'com.android.application' } android { compileSdk 33; defaultConfig { applicationId 'com.example.app'; minSdk 21; targetSdk 33 } }" > app/build.gradle
           echo "<manifest package='com.example.app'></manifest>" > app/src/main/AndroidManifest.xml
+          
           gradle wrapper
           ./gradlew assembleDebug
 
