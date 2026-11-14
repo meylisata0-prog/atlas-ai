@@ -1,0 +1,42 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build with Gradle
+        run: |
+          mkdir -p app/src/main/java/com/example/app app/src/main/res
+          
+          echo "buildscript { repositories { google(); mavenCentral(); gradlePluginPortal() } dependencies { classpath 'com.android.tools.build:gradle:7.4.2' } }" > build.gradle
+          echo "allprojects { repositories { google(); mavenCentral() } }" >> build.gradle
+          echo "include ':app'" > settings.gradle
+
+          echo "apply plugin: 'com.android.application'" > app/build.gradle
+          echo "android { compileSdk 33; defaultConfig { applicationId 'com.example.app'; minSdk 21; targetSdk 33 } }" >> app/build.gradle
+
+          echo "<manifest package='com.example.app'></manifest>" > app/src/main/AndroidManifest.xml
+          
+          gradle wrapper
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: app/build/outputs/apk/debug/*.apk
+        if: always()
