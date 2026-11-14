@@ -1,0 +1,44 @@
+name: Build Atlas AI APK
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Kodları Çek
+        uses: actions/checkout@v4
+
+      - name: Java 17 Kurulumu
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Proje Dosyalarını ve Wrapper Oluştur
+        run: |
+          mkdir -p app/src/main/java/com/atlas/ai app/src/main/res
+          
+          echo "include ':app'" > settings.gradle
+          echo "buildscript { repositories { google(); mavenCentral() } } allprojects { repositories { google(); mavenCentral() } }" > build.gradle
+          echo "plugins { id 'com.android.application' } android { compileSdk 33; defaultConfig { applicationId 'com.atlas.ai'; minSdk 21; targetSdk 33 } }" > app/build.gradle
+          echo '<manifest package="com.atlas.ai"><application android:label="Atlas AI"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>' > app/src/main/AndroidManifest.xml
+          echo 'package com.atlas.ai; import android.os.Bundle; import androidx.appcompat.app.AppCompatActivity; public class MainActivity extends AppCompatActivity { @Override protected void onCreate(Bundle s) { super.onCreate(s); } }' > app/src/main/java/com/atlas/ai/MainActivity.java
+
+          # Gradle Wrapper'ı doğrudan indirip kuruyoruz
+          gradle wrapper
+          chmod +x gradlew
+
+      - name: Projeyi Derle
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: APK Dosyasını Kaydet
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: app/build/outputs/apk/debug/*.apk
+        if: always()
