@@ -19,29 +19,24 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Klasör Yapısını Düzenle ve Projeyi Kur
+      - name: Dosyaları Doğru Klasörüne Taşı ve Projeyi Hazırla
         run: |
-          # Önce her şeyi doğru klasör yapısına taşıyoruz
-          mkdir -p app/src/main/java/com/atlas/ai app/src/main/res
+          mkdir -p app/src/main/java/com/example/atlasai app/src/main/res
           
-          # Eğer ana dizinde MainActivity varsa app içine taşı
+          # Eğer ana dizinde MainActivity.java varsa doğru klasöre taşıyoruz
           if [ -f "MainActivity.java" ]; then
-            mv MainActivity.java app/src/main/java/com/atlas/ai/
-          else
-            echo 'package com.atlas.ai; import android.os.Bundle; import androidx.appcompat.app.AppCompatActivity; public class MainActivity extends AppCompatActivity { @Override protected void onCreate(Bundle s) { super.onCreate(s); } }' > app/src/main/java/com/atlas/ai/MainActivity.java
+            mv MainActivity.java app/src/main/java/com/example/atlasai/
           fi
 
-          # Gradle ve Manifest dosyalarını oluştur
-          echo "include ':app'" > settings.gradle
-          echo "buildscript { repositories { google(); mavenCentral() } } allprojects { repositories { google(); mavenCentral() } }" > build.gradle
-          echo "plugins { id 'com.android.application' } android { compileSdk 33; defaultConfig { applicationId 'com.atlas.ai'; minSdk 21; targetSdk 33 } }" > app/build.gradle
-          echo '<manifest package="com.atlas.ai"><application android:label="Atlas AI"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>' > app/src/main/AndroidManifest.xml
+          # Eksik gradle dosyaları varsa otomatik oluşturuyoruz
+          if [ ! -f "settings.gradle" ]; then
+            echo 'pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } } dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } } rootProject.name = "AtlasAI"; include(":app")' > settings.gradle
+          fi
 
-      - name: Gradle Wrapper Oluştur ve Derle
-        run: |
-          gradle wrapper
-          chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+      - name: Gradle Build ile Derle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          arguments: assembleDebug
 
       - name: APK Dosyasını Kaydet
         uses: actions/upload-artifact@v4
