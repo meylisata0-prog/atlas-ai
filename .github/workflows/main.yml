@@ -19,22 +19,29 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Proje Dosyalarını ve Wrapper Oluştur
+      - name: Klasör Yapısını Düzenle ve Projeyi Kur
         run: |
+          # Önce her şeyi doğru klasör yapısına taşıyoruz
           mkdir -p app/src/main/java/com/atlas/ai app/src/main/res
           
+          # Eğer ana dizinde MainActivity varsa app içine taşı
+          if [ -f "MainActivity.java" ]; then
+            mv MainActivity.java app/src/main/java/com/atlas/ai/
+          else
+            echo 'package com.atlas.ai; import android.os.Bundle; import androidx.appcompat.app.AppCompatActivity; public class MainActivity extends AppCompatActivity { @Override protected void onCreate(Bundle s) { super.onCreate(s); } }' > app/src/main/java/com/atlas/ai/MainActivity.java
+          fi
+
+          # Gradle ve Manifest dosyalarını oluştur
           echo "include ':app'" > settings.gradle
           echo "buildscript { repositories { google(); mavenCentral() } } allprojects { repositories { google(); mavenCentral() } }" > build.gradle
           echo "plugins { id 'com.android.application' } android { compileSdk 33; defaultConfig { applicationId 'com.atlas.ai'; minSdk 21; targetSdk 33 } }" > app/build.gradle
           echo '<manifest package="com.atlas.ai"><application android:label="Atlas AI"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>' > app/src/main/AndroidManifest.xml
-          echo 'package com.atlas.ai; import android.os.Bundle; import androidx.appcompat.app.AppCompatActivity; public class MainActivity extends AppCompatActivity { @Override protected void onCreate(Bundle s) { super.onCreate(s); } }' > app/src/main/java/com/atlas/ai/MainActivity.java
 
-          # Gradle Wrapper'ı doğrudan indirip kuruyoruz
+      - name: Gradle Wrapper Oluştur ve Derle
+        run: |
           gradle wrapper
           chmod +x gradlew
-
-      - name: Projeyi Derle
-        run: ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug --stacktrace
 
       - name: APK Dosyasını Kaydet
         uses: actions/upload-artifact@v4
