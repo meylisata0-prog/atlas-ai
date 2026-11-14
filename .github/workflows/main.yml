@@ -27,7 +27,9 @@ jobs:
           echo "rootProject.name='App'" >> settings.gradle
           echo "include ':app'" >> settings.gradle
 
-          echo "plugins { id 'com.android.application' } android { compileSdk 33; defaultConfig { applicationId 'com.example.app'; minSdk 21; targetSdk 33 } }" > app/build.gradle
+          echo "apply plugin: 'com.android.application'" > app/build.gradle
+          echo "android { compileSdk 33; defaultConfig { applicationId 'com.example.app'; minSdk 21; targetSdk 33 } }" >> app/build.gradle
+
           echo "<manifest package='com.example.app'></manifest>" > app/src/main/AndroidManifest.xml
           
           gradle wrapper
